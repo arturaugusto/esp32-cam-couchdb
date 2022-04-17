@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+  <script src="//cdn.jsdelivr.net/npm/pouchdb@7.3.0/dist/pouchdb.min.js"></script>
+
+  <style type="text/css">
+    html {
+      background: #191713;
+      font-family: BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+      font-size: 36px;
+      user-select: none;
+
+    }
+    .top {
+      height: 40vh;
+    }
+    .key {
+      display: flex;
+      align-items:center;
+      justify-content:center;
+      width: 32.5%;
+      height: 70px;
+      background: #2d2b27;
+      border: 1px solid #a25d5d;
+      color: white;
+      border-radius: 0px;
+      margin: 2px;
+      cursor: pointer;
+    }
+    a:hover {
+      background-color: #43413e;
+    }
+    a:active, .is-down {
+      background-color: #55534f;
+    }
+    @media all and (min-width: 800px) {
+      .keypad {
+        margin-left: 280px;
+        margin-right: 280px;
+      }
+    }
+    .hidden {
+      display: none;
+    }
+    .keypad {
+      height: 50 vh;
+    }
+    .row {
+      display: flex;
+      justify-content: space-evenly;
+    }
+  </style>
+  
+</head>
+<body>
+
+<canvas id='cam-feed'></canvas>
+
+<div class="row">
+  <a class="key" id="ArrowUp">&#x2191;</a>
+</div>
+
+<div class="row">
+  <a class="key" id="ArrowLeft">&#x2190;</a>
+  <a class="key" id="ArrowDown">&#x2193;</a>
+  <a class="key" id="ArrowRight">&#x2192;</a>
+</div>
+
+<script type="text/javascript">
+  const db = new PouchDB('http://192.168.15.110:5984/teste');
+  db.changes({
+    'live': true,
+    'attachments': true,
+    'binary': true,
+    'since': 'now',
+    'include_docs': true,
+  }).on('change', function(change) {
+    if (change.id.startsWith('img_')) {
+      console.log(change)
+      createImageBitmap(change.doc._attachments['img.jpeg'].data).then(imageBitmap => {
+        document.getElementById('cam-feed').getContext('2d').drawImage(imageBitmap, 0, 0)
+      })
+    }
+
+  }).on('complete', function(info) {
+    // changes() was canceled
+  }).on('error', function (err) {
+    console.log(err);
+  });
+
+
+
+  ;['mousedown', 'touchstart'].forEach(eventType => {
+    document.getElementById('ArrowUp').addEventListener(eventType, () => set_pwm(6000))
+    document.getElementById('ArrowDown').addEventListener(eventType, () => set_pwm(7000))
+    document.getElementById('ArrowLeft').addEventListener(eventType, () => set_pwm(8000))
+    document.getElementById('ArrowRight').addEventListener(eventType, () => set_pwm(9000))
+  })
+
+  ;['ArrowUp','ArrowLeft', 'ArrowDown', 'ArrowRight'].forEach(item => {
+    ;['mouseup', 'touchstop', 'touchend', 'touchcancel'].forEach(eventType => {
+      document.getElementById(item).addEventListener(eventType, () => set_pwm(0))
+    })
+  })
+
+
+  function set_pwm(freq) {
+    let cmd = {_id: 'cmd', 'p12_pwm_freq': freq};
+    db.get('cmd').then(doc => db.put(Object.assign(doc, cmd)))
+      .then(doc => console.log(doc))
+      .catch(err => db.put(cmd))
+  }
+
+
+
+
+// cmd={_id: 'cmd', x:1};db.get('cmd').then(doc => db.put(Object.assign(doc, cmd))).then(doc => console.log(doc)).catch(err => db.put(cmd))
+</script>
+</body>
+</html>
