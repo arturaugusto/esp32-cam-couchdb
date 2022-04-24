@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title></title>
   <script src="//cdn.jsdelivr.net/npm/pouchdb@7.3.0/dist/pouchdb.min.js"></script>
+  <script src="pouchdb.authentication.min.js"></script>
 
   <style type="text/css">
     html {
@@ -52,6 +53,10 @@
       display: flex;
       justify-content: space-evenly;
     }
+    .center {
+      width: 300px;
+      margin: auto
+    }
   </style>
   
 </head>
@@ -59,18 +64,35 @@
 
 <canvas id='cam-feed'></canvas>
 
-<div class="row">
-  <a class="key" id="ArrowUp">&#x2191;</a>
-</div>
 
-<div class="row">
-  <a class="key" id="ArrowLeft">&#x2190;</a>
-  <a class="key" id="ArrowDown">&#x2193;</a>
-  <a class="key" id="ArrowRight">&#x2192;</a>
+<div class="center">
+  <div class="row">
+    <a class="key" id="ArrowUp">&#x2191;</a>
+  </div>
+  <div class="row">
+    <a class="key" id="ArrowLeft">&#x2190;</a>
+    <a class="key" id="ArrowDown">&#x2193;</a>
+    <a class="key" id="ArrowRight">&#x2192;</a>
+  </div>
+
+  <div class="row">
+    <a class="key" id="Led">LED</a>
+  </div>
+
 </div>
 
 <script type="text/javascript">
-  const db = new PouchDB('http://192.168.15.110:5984/teste');
+  const JWT = 'XXXXX'
+  const db = new PouchDB('https://couchdatabase.xyz/_couch/teste', {
+    // skip_setup: false,
+    // To use JWT, this header must be added.
+    //Note the you shoud NOT hard code the JWT string
+    headers: {
+      'Authorization': 'Bearer ' + JWT
+    }
+    
+  });
+  console.log(db);
   db.changes({
     'live': true,
     'attachments': true,
@@ -88,30 +110,46 @@
   }).on('complete', function(info) {
     // changes() was canceled
   }).on('error', function (err) {
-    console.log(err);
-  });
+    console.log(err)
+  })
 
 
 
   ;['mousedown', 'touchstart'].forEach(eventType => {
-    document.getElementById('ArrowUp').addEventListener(eventType, () => set_pwm(6000))
-    document.getElementById('ArrowDown').addEventListener(eventType, () => set_pwm(7000))
-    document.getElementById('ArrowLeft').addEventListener(eventType, () => set_pwm(8000))
-    document.getElementById('ArrowRight').addEventListener(eventType, () => set_pwm(9000))
+    document.getElementById('ArrowUp').addEventListener(eventType,    _ => putCmd({'dig': [{'io': 12, 'on': true}]}))
+    document.getElementById('ArrowDown').addEventListener(eventType,  _ => putCmd({'dig': [{'io': 13, 'on': true}]}))
+    document.getElementById('ArrowLeft').addEventListener(eventType,  _ => putCmd({'dig': [{'io': 15, 'on': true}]}))
+    document.getElementById('ArrowRight').addEventListener(eventType, _ => putCmd({'dig': [{'io': 14, 'on': true}]}))
+    document.getElementById('Led').addEventListener(eventType,        _ => putCmd({'dig': [{'io': 4,  'on': true}]}))
   })
 
   ;['ArrowUp','ArrowLeft', 'ArrowDown', 'ArrowRight'].forEach(item => {
     ;['mouseup', 'touchstop', 'touchend', 'touchcancel'].forEach(eventType => {
-      document.getElementById(item).addEventListener(eventType, () => set_pwm(0))
+      document.getElementById(item).addEventListener(eventType, () => window.setTimeout(_ => 
+        putCmd({
+          'dig': [
+            {'io': 12, 'on': false},
+            {'io': 13, 'on': false},
+            {'io': 15, 'on': false},
+            {'io': 14, 'on': false}
+          ]
+        })
+      ), 10)
+
+      document.getElementById('Led').addEventListener(eventType, () => window.setTimeout(_ => 
+        putCmd({
+          'dig': [
+            {'io': 4, 'on': false}
+          ]
+        })
+      ), 10)
     })
   })
-
-
-  function set_pwm(freq) {
-    let cmd = {_id: 'cmd', 'p12_pwm_freq': freq};
+  
+  function putCmd(cmd) {
     db.get('cmd').then(doc => db.put(Object.assign(doc, cmd)))
       .then(doc => console.log(doc))
-      .catch(err => db.put(cmd))
+      .catch(err => putCmd(cmd))
   }
 
 

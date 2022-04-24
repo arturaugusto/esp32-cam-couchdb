@@ -4,8 +4,6 @@ import network
 import utime
 import ntptime
 
-## ftp access
-#from ftp import ftpserver
 
 def do_connect():
     sta_if = network.WLAN(network.STA_IF)
