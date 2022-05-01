@@ -57,6 +57,10 @@
       width: 300px;
       margin: auto
     }
+    canvas {
+      min-width: 500px;
+    }
+
   </style>
   
 </head>
@@ -82,7 +86,17 @@
 </div>
 
 <script type="text/javascript">
-  const JWT = 'XXXXX'
+
+  var JWT = ''
+  // get JWT from url
+  if (window.location.search) {
+    JWT = window.location.search.split('token=')[1]
+  }
+
+  if (!JWT) {
+    window.alert('No JWT query param provided.')
+  }
+
   const db = new PouchDB('https://couchdatabase.xyz/_couch/teste', {
     // skip_setup: false,
     // To use JWT, this header must be added.
@@ -116,11 +130,40 @@
 
 
   ;['mousedown', 'touchstart'].forEach(eventType => {
-    document.getElementById('ArrowUp').addEventListener(eventType,    _ => putCmd({'dig': [{'io': 12, 'on': true}]}))
-    document.getElementById('ArrowDown').addEventListener(eventType,  _ => putCmd({'dig': [{'io': 13, 'on': true}]}))
-    document.getElementById('ArrowLeft').addEventListener(eventType,  _ => putCmd({'dig': [{'io': 15, 'on': true}]}))
-    document.getElementById('ArrowRight').addEventListener(eventType, _ => putCmd({'dig': [{'io': 14, 'on': true}]}))
-    document.getElementById('Led').addEventListener(eventType,        _ => putCmd({'dig': [{'io': 4,  'on': true}]}))
+    document.getElementById('ArrowUp').addEventListener(eventType,    _ => putCmd({
+      'dig': [
+        {'io': 14, 'on': true},
+        {'io': 13, 'on': true}
+      ]}
+    ))
+    
+    document.getElementById('ArrowDown').addEventListener(eventType,  _ => putCmd({
+      'dig': [
+        {'io': 15, 'on': true},
+        {'io': 12, 'on': true}
+      ]}
+    ))
+
+    document.getElementById('ArrowLeft').addEventListener(eventType,  _ => putCmd({
+      'dig': [
+        {'io': 14, 'on': true},
+        {'io': 12, 'on': true}
+      ]}
+    ))
+
+    document.getElementById('ArrowRight').addEventListener(eventType, _ => putCmd({
+      'dig': [
+        {'io': 13, 'on': true},
+        {'io': 15, 'on': true}
+      ]}
+    ))
+
+    document.getElementById('Led').addEventListener(eventType,        _ => putCmd({
+      'dig': [
+        {'io': 4,  'on': true}
+      ]}
+    ))
+
   })
 
   ;['ArrowUp','ArrowLeft', 'ArrowDown', 'ArrowRight'].forEach(item => {
