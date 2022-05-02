@@ -128,77 +128,58 @@
   })
 
 
-
-  ;['mousedown', 'touchstart'].forEach(eventType => {
-    document.getElementById('ArrowUp').addEventListener(eventType,    _ => putCmd({
+  ;['mouseup', 'touchstop', 'touchend', 'touchcancel'].forEach(eventType => {
+    document.getElementById('ArrowUp').addEventListener(eventType,    (e) => putCmd(e.target, {
       'dig': [
-        {'io': 14, 'on': true},
-        {'io': 13, 'on': true}
+        {'io': 14},
+        {'io': 13}
       ]}
     ))
     
-    document.getElementById('ArrowDown').addEventListener(eventType,  _ => putCmd({
+    document.getElementById('ArrowDown').addEventListener(eventType,  (e) => putCmd(e.target, {
       'dig': [
-        {'io': 15, 'on': true},
-        {'io': 12, 'on': true}
+        {'io': 15},
+        {'io': 12}
       ]}
     ))
 
-    document.getElementById('ArrowLeft').addEventListener(eventType,  _ => putCmd({
+    document.getElementById('ArrowLeft').addEventListener(eventType,  (e) => putCmd(e.target, {
       'dig': [
-        {'io': 14, 'on': true},
-        {'io': 12, 'on': true}
+        {'io': 14},
+        {'io': 12}
       ]}
     ))
 
-    document.getElementById('ArrowRight').addEventListener(eventType, _ => putCmd({
+    document.getElementById('ArrowRight').addEventListener(eventType, (e) => putCmd(e.target, {
       'dig': [
-        {'io': 13, 'on': true},
-        {'io': 15, 'on': true}
+        {'io': 13},
+        {'io': 15}
       ]}
     ))
 
-    document.getElementById('Led').addEventListener(eventType,        _ => putCmd({
+    document.getElementById('Led').addEventListener(eventType,        (e) => putCmd(e.target, {
       'dig': [
-        {'io': 4,  'on': true}
+        {'io': 4}
       ]}
     ))
 
   })
 
   ;['ArrowUp','ArrowLeft', 'ArrowDown', 'ArrowRight'].forEach(item => {
-    ;['mouseup', 'touchstop', 'touchend', 'touchcancel'].forEach(eventType => {
-      document.getElementById(item).addEventListener(eventType, () => window.setTimeout(_ => 
-        putCmd({
-          'dig': [
-            {'io': 12, 'on': false},
-            {'io': 13, 'on': false},
-            {'io': 15, 'on': false},
-            {'io': 14, 'on': false}
-          ]
-        })
-      ), 10)
-
-      document.getElementById('Led').addEventListener(eventType, () => window.setTimeout(_ => 
-        putCmd({
-          'dig': [
-            {'io': 4, 'on': false}
-          ]
-        })
-      ), 10)
+    ;['mousedown', 'touchstart'].forEach(eventType => {
+      document.getElementById(item).addEventListener(eventType, (e) => e.target.setAttribute('event-start', Date.now()))
     })
   })
   
-  function putCmd(cmd) {
+  function putCmd(targetEl, cmd) {
+    let duration = Date.now()-parseFloat(targetEl.getAttribute('event-start'))
+    console.log(duration)
+    cmd.duration = duration
     db.get('cmd').then(doc => db.put(Object.assign(doc, cmd)))
       .then(doc => console.log(doc))
       .catch(err => putCmd(cmd))
   }
 
-
-
-
-// cmd={_id: 'cmd', x:1};db.get('cmd').then(doc => db.put(Object.assign(doc, cmd))).then(doc => console.log(doc)).catch(err => db.put(cmd))
 </script>
 </body>
 </html>

@@ -47,12 +47,13 @@ camera.init(0, format=camera.JPEG, xclk_freq=camera.XCLK_10MHz, fb_location=came
 # FRAME_P_HD FRAME_P_3MP FRAME_QXGA FRAME_QHD FRAME_WQXGA
 # FRAME_P_FHD FRAME_QSXGA
 # Check this link for more information: https://bit.ly/2YOzizz
-camera.framesize(camera.FRAME_240X240)
+camera.framesize(camera.FRAME_VGA)
 
 # quality
 #camera.quality(40)
 # 10-63 lower number means higher quality
 
+continuous_capture = False
 
 while True:
   try:
@@ -76,34 +77,36 @@ while True:
     time.sleep(0.1)
 
     while True:
-      print('capturing frame...')
-      buf = camera.capture()
-      print('capture done.')
-      time.sleep(0.1)
-      if buf:
-        try:
-          doc_id = 'img_'+str(time.time_ns())
-          payload = bytes('PUT /_couch/teste/{}/img.jpeg?batch=ok HTTP/1.1\r\nHost: couchdatabase.xyz\r\nAuthorization: Bearer {}\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n'.format(doc_id, jwt, len(buf)), 'utf-8')+buf
-          #s.send(payload)
-          print('sending data...')
-          s.write(payload)
-          print('send done.')
 
-          print('waiting ok response...')
-          while True:
-            buf = s.readline()
-            if '"ok":true' in buf:
-              #print(buf)
-              break
-          print('waiting ok done.')
-          #time.sleep(0.1)
-        except Exception as e:
-          print('error sending frame')
-          print(e)
-          s.close()
-          socket_cmd.close()
-          do_connect()
-          break
+      if continuous_capture:
+        print('capturing frame...')
+        buf = camera.capture()
+        print('capture done.')
+        time.sleep(0.1)
+        if buf:
+          try:
+            doc_id = 'img_'+str(time.time_ns())
+            payload = bytes('PUT /_couch/teste/{}/img.jpeg?batch=ok HTTP/1.1\r\nHost: couchdatabase.xyz\r\nAuthorization: Bearer {}\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n'.format(doc_id, jwt, len(buf)), 'utf-8')+buf
+            #s.send(payload)
+            print('sending data...')
+            s.write(payload)
+            print('send done.')
+
+            print('waiting ok response...')
+            while True:
+              buf = s.readline()
+              if '"ok":true' in buf:
+                #print(buf)
+                break
+            print('waiting ok done.')
+            #time.sleep(0.1)
+          except Exception as e:
+            print('error sending frame')
+            print(e)
+            s.close()
+            socket_cmd.close()
+            do_connect()
+            break
 
       # read cmd doc
       try:
@@ -126,15 +129,50 @@ while True:
           {'io': 13, 'f': 200, 'on': True}
         ]
         """
-        
-        if 'pwm' in data['doc']:
-          for c in data['doc']['pwm']:
-            pwm_dict[c['io']].freq(c['f'])
-        
+                
         if 'dig' in data['doc']:
+          
           for c in data['doc']['dig']:
-            dig_dict[c['io']].value(c['on'])
-        print('read done.')
+            dig_dict[c['io']].value(True)
+          
+          if 'duration' in data['doc']:
+            time.sleep(data['doc']['duration'] / 1000)
+
+          for c in data['doc']['dig']:
+            dig_dict[c['io']].value(False)
+        
+
+          print('capturing frame...')
+          buf = camera.capture()
+          print('capture done.')
+          time.sleep(0.1)
+          if buf:
+            try:
+              doc_id = 'img_'+str(time.time_ns())
+              payload = bytes('PUT /_couch/teste/{}/img.jpeg?batch=ok HTTP/1.1\r\nHost: couchdatabase.xyz\r\nAuthorization: Bearer {}\r\nContent-Type: image/jpeg\r\nContent-Length: {}\r\n\r\n'.format(doc_id, jwt, len(buf)), 'utf-8')+buf
+              #s.send(payload)
+              print('sending data...')
+              s.write(payload)
+              print('send done.')
+
+              print('waiting ok response...')
+              while True:
+                buf = s.readline()
+                if '"ok":true' in buf:
+                  #print(buf)
+                  break
+              print('waiting ok done.')
+              #time.sleep(0.1)
+            except Exception as e:
+              print('error sending frame')
+              print(e)
+              s.close()
+              socket_cmd.close()
+              do_connect()
+              break
+
+        print('cmd handle done.')
+      
       except Exception as e:
         print('read failed.')
         #print('err2')
