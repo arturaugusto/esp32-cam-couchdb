@@ -47,7 +47,9 @@ camera.init(0, format=camera.JPEG, xclk_freq=camera.XCLK_10MHz, fb_location=came
 # FRAME_P_HD FRAME_P_3MP FRAME_QXGA FRAME_QHD FRAME_WQXGA
 # FRAME_P_FHD FRAME_QSXGA
 # Check this link for more information: https://bit.ly/2YOzizz
-camera.framesize(camera.FRAME_VGA)
+
+# camera.framesize(camera.FRAME_VGA)
+camera.framesize(camera.FRAME_240X240)
 
 # quality
 #camera.quality(40)
@@ -131,17 +133,19 @@ while True:
         """
                 
         if 'dig' in data['doc']:
-          
           for c in data['doc']['dig']:
-            dig_dict[c['io']].value(True)
+            dig_dict[c['io']].value(c['on'])
           
-          if 'duration' in data['doc']:
-            time.sleep(data['doc']['duration'] / 1000)
+          # for c in data['doc']['dig']:
+          #   dig_dict[c['io']].value(True)
+          
+          # if 'duration' in data['doc']:
+          #   time.sleep(data['doc']['duration'] / 1000)
 
-          for c in data['doc']['dig']:
-            dig_dict[c['io']].value(False)
+          # for c in data['doc']['dig']:
+          #   dig_dict[c['io']].value(False)
         
-
+        if 'pic' in data['doc'] and data['doc']['pic']:
           print('capturing frame...')
           buf = camera.capture()
           print('capture done.')
